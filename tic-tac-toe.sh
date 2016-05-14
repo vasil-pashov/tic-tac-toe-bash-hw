@@ -87,7 +87,7 @@ check_win() {
 }
 
 put_mark() {
-    #1 row; 2 col; 3 board; 4 mark
+    #1 row; 2 col; 3 mark; 4 board
     h=$(head -n$(( $1 * 2 + 1)) $board)
     t=$(tail -n+$(( $1 * 2 + 3 )) $board)
     line=$(head -n$(($1*2 + 2)) $board | tail -n1)
@@ -101,6 +101,16 @@ put_mark() {
     echo "$t" | tee -a $4
 }
 
+is_full() {
+    #1 board
+    f=$(grep "\|[XO]\|[XO]\|[XO]\|" $1 | wc -l) 
+    if [ $f -eq 3 ];then
+        echo 1
+    else
+        echo 0
+    fi
+}
+
 is_free() {
     #1 row; 2 col; 3 board
     field=$(head -n$(( $1 * 2 + 2 )) $3 | tail -n1 | cut -d"|" -f$(($2 + 2)))
@@ -110,30 +120,34 @@ is_free() {
         echo 1
     fi
 }
-
 ai() {
     #1 board; 2 mark
     for i in $(seq 0 2);do
         for j in $(seq 0 2);do
             if [ $(is_free $i $j $1) -eq 1 ];then
                 echo "$i $j $2" >> f
-                put_mark $i $j $1 $2
-                x=check_win $i $j "X" $1
-                o=check_win $i $j "O" $1
+                f=$(put_mark $i $j $2 $1)
+                x=$(check_win $i $j "X" $1)
+                o=$(check_win $i $j "O" $1)
                 if [ $x -eq 1 ];then
                     echo 0
                 elif [ $o -eq 1 ];then
                     echo 1
                 else
-                    if [ $2 = "X" ];then
-                        m="O"
+                    if [ $(is_full $1) ];then
+                        echo 0.5
                     else
-                        m="X"
+                        if [ $2 = "X" ];then
+                            m="O"
+                        else
+                            m="X"
+                        fi
+                        echo $(ai $1 $m)
+                        #cp $1 "$(date +%s%N)"
+                        f=$(put_mark $i $j " " $1)
                     fi
-                    echo $(ai $1 $m)
-                    put_mark $i $j $1 " "
                 fi
-            fi
+            fi  
         done
     done
 }
@@ -192,28 +206,13 @@ do
                 echo "This field is already taken!"
                 isPositionValid=0
             fi
-            #field=$(head -n$(( $row * 2 + 2 )) $board | tail -n1 | cut -d"|" -f$(($col + 2)))
-            #if [ "$field" != " " ];then
-            #    echo "This field is already taken!"
-            #    isPositionValid=0
-            #fi
         else
             echo "Wrong input!"
         fi
     done
     #==================================================================
     #========================Create new board==========================
-    #h=$(head -n$(( $row*2 + 1)) $board)
-    #t=$(tail -n+$(( $row*2 + 3 )) $board)
-    #line=$(head -n$(($row*2 + 2)) $board | tail -n1)
-    #left=$(echo $line | cut -d"|" -f1-$(( $col + 1)))
-    #right=$(echo $line | cut -d"|" -f$(( $col + 3))-)
-    #newLine="$left|$mark|$right"
 
-    #echo >> $board
-    #echo "$h" | tee $board
-    #echo "$newLine" | tee -a $board
-    #echo "$t" | tee -a $board
    
     put_mark $row $col $mark $board 
 
@@ -231,6 +230,7 @@ do
     else
         player=$player2
         mark="O"
+        echo $(ai $board $mark)
     fi
     movesCnt=$(($movesCnt + 1))
 done
