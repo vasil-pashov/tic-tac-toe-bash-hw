@@ -112,9 +112,28 @@ is_free() {
 }
 
 ai() {
-    #1 board
+    #1 board; 2 mark
     for i in $(seq 0 2);do
         for j in $(seq 0 2);do
+            if [ $(is_free $i $j $1) -eq 1 ];then
+                echo "$i $j $2" >> f
+                put_mark $i $j $1 $2
+                x=check_win $i $j "X" $1
+                o=check_win $i $j "O" $1
+                if [ $x -eq 1 ];then
+                    echo 0
+                elif [ $o -eq 1 ];then
+                    echo 1
+                else
+                    if [ $2 = "X" ];then
+                        m="O"
+                    else
+                        m="X"
+                    fi
+                    echo $(ai $1 $m)
+                    put_mark $i $j $1 " "
+                fi
+            fi
         done
     done
 }
