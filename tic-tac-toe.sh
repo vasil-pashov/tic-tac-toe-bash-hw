@@ -95,10 +95,28 @@ put_mark() {
     right=$(echo $line | cut -d"|" -f$(( $2 + 3))-)
     newLine="$left|$3|$right"
 
-    echo >> $3
-    echo "$h" | tee $3
-    echo "$newLine" | tee -a $3
-    echo "$t" | tee -a $3
+    echo >> $4
+    echo "$h" | tee $4
+    echo "$newLine" | tee -a $4
+    echo "$t" | tee -a $4
+}
+
+is_free() {
+    #1 row; 2 col; 3 board
+    field=$(head -n$(( $1 * 2 + 2 )) $3 | tail -n1 | cut -d"|" -f$(($2 + 2)))
+    if [ "$field" != " " ];then
+        echo 0
+    else
+        echo 1
+    fi
+}
+
+ai() {
+    #1 board
+    for i in $(seq 0 2);do
+        for j in $(seq 0 2);do
+        done
+    done
 }
 
 #===========Create Dir================
@@ -121,7 +139,7 @@ filepath=".tic-tac-toe/$name.log"
 touch $filepath
 #====================================
 #========Board file==================
-board="$name-board.tmp"
+board="./$name-board.tmp"
 
 i=0
 echo "-------" >> $board
@@ -151,28 +169,34 @@ do
         if [ $isPositionValid -eq 1 ];then
             row=$(expr substr $playerMove 2 1)
             col=$(expr substr $playerMove 4 1)
-            field=$(head -n$(( $row * 2 + 2 )) $board | tail -n1 | cut -d"|" -f$(($col + 2)))
-            if [ "$field" != " " ];then
+            if [ $(is_free $row $col $board) -eq 0 ];then
                 echo "This field is already taken!"
                 isPositionValid=0
             fi
+            #field=$(head -n$(( $row * 2 + 2 )) $board | tail -n1 | cut -d"|" -f$(($col + 2)))
+            #if [ "$field" != " " ];then
+            #    echo "This field is already taken!"
+            #    isPositionValid=0
+            #fi
         else
             echo "Wrong input!"
         fi
     done
     #==================================================================
     #========================Create new board==========================
-    h=$(head -n$(( $row*2 + 1)) $board)
-    t=$(tail -n+$(( $row*2 + 3 )) $board)
-    line=$(head -n$(($row*2 + 2)) $board | tail -n1)
-    left=$(echo $line | cut -d"|" -f1-$(( $col + 1)))
-    right=$(echo $line | cut -d"|" -f$(( $col + 3))-)
-    newLine="$left|$mark|$right"
+    #h=$(head -n$(( $row*2 + 1)) $board)
+    #t=$(tail -n+$(( $row*2 + 3 )) $board)
+    #line=$(head -n$(($row*2 + 2)) $board | tail -n1)
+    #left=$(echo $line | cut -d"|" -f1-$(( $col + 1)))
+    #right=$(echo $line | cut -d"|" -f$(( $col + 3))-)
+    #newLine="$left|$mark|$right"
 
-    echo >> $board
-    echo "$h" | tee $board
-    echo "$newLine" | tee -a $board
-    echo "$t" | tee -a $board
+    #echo >> $board
+    #echo "$h" | tee $board
+    #echo "$newLine" | tee -a $board
+    #echo "$t" | tee -a $board
+   
+    put_mark $row $col $mark $board 
 
 
     echo "$player - $playerMove">>$filepath
