@@ -88,9 +88,9 @@ check_win() {
 
 put_mark() {
     #1 row; 2 col; 3 mark; 4 board
-    h=$(head -n$(( $1 * 2 + 1)) $board)
-    t=$(tail -n+$(( $1 * 2 + 3 )) $board)
-    line=$(head -n$(($1*2 + 2)) $board | tail -n1)
+    h=$(head -n$(( $1 * 2 + 1)) $4)
+    t=$(tail -n+$(( $1 * 2 + 3 )) $4)
+    line=$(head -n$(($1*2 + 2)) $4 | tail -n1)
     left=$(echo $line | cut -d"|" -f1-$(( $2 + 1)))
     right=$(echo $line | cut -d"|" -f$(( $2 + 3))-)
     newLine="$left|$3|$right"
@@ -136,39 +136,31 @@ min() {
         echo $2
     fi
 }
-
+cnt=0
 ai() {
     #1 board; 2 mark
-    if [ $2 = "X" ];then
-        score=-2
-        m="O"
-    else
-        score=2
-        m="X"
-    fi
+    local i
+    local j
     for i in $(seq 0 2);do
         for j in $(seq 0 2);do
             if [ $(is_free $i $j $1) -eq 1 ];then
-                f=$(put_mark $i $j $2 $1)
-                x=$(check_win $i $j "X" $1)
-                o=$(check_win $i $j "O" $1)
-                if [ $x -eq 1 ];then
+                #cnt=$(( $cnt + 1))
+                #echo "$cnt"
+                if [ $(check_win $i $j "X" $1) -eq 1 ];then
                     echo -1
-                elif [ $o -eq 1 ];then
+                elif [  $(check_win $i $j "O" $1) -eq 1 ];then
                     echo 1
+                elif [ $(is_full $1) -eq 1 ];then
+                    echo 0
                 else
-                    if [ $(is_full $1) ];then
-                        echo 0
+                    f=$(put_mark $i $j $2 $1)
+                    if [ $2 = "X" ];then
+                        a=$(ai $1 "O" $i $j)
                     else
-                        if [ $2 = "X" ];then
-                            childScore=min $(ai $1 $m) score
-                        else
-                            childScore=max $(ai $1 $m) score
-                        fi
-                        echo $childScore
-                        #cp $1 "$(date +%s%N)"
-                        f=$(put_mark $i $j " " $1)
+                        a=$(ai $1 "X" $i $j)
                     fi
+                    echo "$i $j" >> f
+                    f=$(put_mark $i $j " " $1)
                 fi
             fi
         done
@@ -195,7 +187,7 @@ filepath=".tic-tac-toe/$name.log"
 touch $filepath
 #====================================
 #========Board file==================
-board="./$name-board.tmp"
+board="$name-board.tmp"
 
 i=0
 echo "-------" >> $board
@@ -253,7 +245,7 @@ do
     else
         player=$player2
         mark="O"
-        echo $(ai $board $mark)
+        ai $board $mark
     fi
     movesCnt=$(($movesCnt + 1))
 done
