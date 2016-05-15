@@ -1,3 +1,4 @@
 *.log
 *.tmp
 .tic-tac-toe/*
+*.swp

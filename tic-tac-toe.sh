@@ -120,34 +120,57 @@ is_free() {
         echo 1
     fi
 }
+
+max() {
+    if [ $1 -gt $2 ];then
+        echo $1
+    else
+        echo $2
+    fi
+}
+
+min() {
+    if [ $1 -lt $2 ];then
+        echo $1
+    else
+        echo $2
+    fi
+}
+
 ai() {
     #1 board; 2 mark
+    if [ $2 = "X" ];then
+        score=-2
+        m="O"
+    else
+        score=2
+        m="X"
+    fi
     for i in $(seq 0 2);do
         for j in $(seq 0 2);do
             if [ $(is_free $i $j $1) -eq 1 ];then
-                echo "$i $j $2" >> f
                 f=$(put_mark $i $j $2 $1)
                 x=$(check_win $i $j "X" $1)
                 o=$(check_win $i $j "O" $1)
                 if [ $x -eq 1 ];then
-                    echo 0
+                    echo -1
                 elif [ $o -eq 1 ];then
                     echo 1
                 else
                     if [ $(is_full $1) ];then
-                        echo 0.5
+                        echo 0
                     else
                         if [ $2 = "X" ];then
-                            m="O"
+                            childScore=min $(ai $1 $m) score
                         else
-                            m="X"
+                            childScore=max $(ai $1 $m) score
                         fi
-                        echo $(ai $1 $m)
+                        echo $childScore
                         #cp $1 "$(date +%s%N)"
                         f=$(put_mark $i $j " " $1)
                     fi
                 fi
-            fi  
+            fi
         done
     done
 }
