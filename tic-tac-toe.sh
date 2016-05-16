@@ -218,7 +218,7 @@ do
     else
         player=$player2
         mark="O"
-        echo "Do you want help? Dont rely on it :("
+        echo "Do you want help y/n? Dont rely on it :("
         read use_ai
         if [ "$use_ai" = "y" ];then
             bash ai.sh "$board" $mark $i $j
