@@ -2,7 +2,7 @@ check_row() {
     #1 row; 2 mark; 3 board
     local win=1
     for i in $(seq 1 3);do
-        f=$(get $1 $i "$3")
+        local f=$(get $1 $i "$3")
         if [ "$f" != $2 ];then
             win=0
             break
@@ -15,7 +15,7 @@ check_col() {
     #1 col; 2 mark; 3 board
     local win=1
     for i in $(seq 1 3);do
-        f=$(get $i $1 "$3")
+        local f=$(get $i $1 "$3")
         if [ "$f" != $2 ];then
             win=0
             break
@@ -44,12 +44,13 @@ check_main_diag() {
 
 check_sec_diag() {
     #1 row; 2 col; 3 mark; 4 board
+    local i
     local win=1
-    if [ $(( $col + $row )) -ne 4 ];then
+    if [ $(( $1 + $2 )) -ne 4 ];then
         win=0
     else
     for i in $(seq 1 3);do
-        field=$(get $(( 4 - $i  )) $i "$4")
+        local field=$(get $(( 4 - $i  )) $i "$4")
             if [ "$field" != $3 ];then
                 win=0
                 break
@@ -78,23 +79,22 @@ check_win() {
 put_mark() {
     #1 row; 2 col; 3 mark; 4 board
     pos=$(( ($1 - 1) * 3 + $2 + 1))
-    prev=$(echo "$board" |cut -d"|" -f1-$(( $pos - 1)))
-    next=$(echo "$board" |cut -d"|" -f$(( $pos + 1))-)
+    prev=$(echo "$4" |cut -d":" -f1-$(( $pos - 1)))
+    next=$(echo "$4" |cut -d":" -f$(( $pos + 1))-)
     #echo "$board"
-    echo "$prev|$mark|$next"
+    echo "$prev:$3:$next"
 }
 
 get() {
     #1 row; 2 col;3 board
-    echo "$3" >> f
     p=$(( ($1 - 1) * 3 + $2 + 1))
-    echo "$3"| cut -d"|" -f$p
+    echo "$3"| cut -d":" -f$p
 }
 
 is_full() {
     #1 board
-    f=$(grep "\|[XO]\|[XO]\|[XO]\|" $1 | wc -l) 
-    if [ $f -eq 3 ];then
+    f=$(echo "$1" | grep -o "[XO]"| wc -l) 
+    if [ $f -eq 9 ];then
         echo 1
     else
         echo 0
@@ -103,11 +103,11 @@ is_full() {
 
 is_free() {
     #1 row; 2 col; 3 board
-    field=$(get $1 $2 "$board")
-    if [ "$field" = " " ];then
-        echo 1
-    else
+    field=$(get $1 $2 "$3")
+    if [ $(echo "$field" | grep "[XO]"|wc -l) -ne 0 ];then
         echo 0
+    else
+        echo 1
     fi
 }
 
@@ -126,43 +126,17 @@ min() {
         echo $2
     fi
 }
-cnt=0
-ai() {
-    #1 board; 2 mark
-    local i
-    local j
-    for i in $(seq 0 2);do
-        for j in $(seq 0 2);do
-            if [ $(is_free $i $j $1) -eq 1 ];then
-                #cnt=$(( $cnt + 1))
-                #echo "$cnt"
-                if [ $(check_win $i $j "X" $1) -eq 1 ];then
-                    echo -1
-                elif [  $(check_win $i $j "O" $1) -eq 1 ];then
-                    echo 1
-                elif [ $(is_full $1) -eq 1 ];then
-                    echo 0
-                else
-                    f=$(put_mark $i $j $2 $1)
-                    if [ $2 = "X" ];then
-                        a=$(ai $1 "O" $i $j)
-                    else
-                        a=$(ai $1 "X" $i $j)
-                    fi
-                    echo "$i $j" >> f
-                    f=$(put_mark $i $j " " $1)
-                fi
-            fi
-        done
-    done
-}
 
 draw() {
     echo "-------------"
     for i in $(seq 1 3);do
         for j in $(seq 1 3);do
             f=$(get $i $j "$1")
-            echo -n "| $f "
+            if [ -z $f ];then
+                echo -n "|   "
+            else
+                echo -n "| $f "
+            fi
         done
         echo "|"
         echo "-------------"
@@ -191,7 +165,7 @@ touch $filepath
 #========Board file==================
 
 for i in $(seq 0 9);do
-    board=$(echo -n "$board |")
+    board=$(echo -n "$board:")
 done
 echo $board
 
@@ -225,7 +199,7 @@ do
     #========================Create new board==========================
 
    
-    board=$(put_mark $row $col $mark $board) 
+    board=$(put_mark $row $col $mark "$board") 
 
     echo $board
 
@@ -244,7 +218,7 @@ do
     else
         player=$player2
         mark="O"
-        #ai $board $mark
+#        ai "$board" $mark
     fi
     movesCnt=$(($movesCnt + 1))
 done
