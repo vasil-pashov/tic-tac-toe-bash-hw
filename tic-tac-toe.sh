@@ -222,6 +222,7 @@ do
         read use_ai
         if [ "$use_ai" = "y" ];then
             bash ai.sh "$board" $mark $i $j
+            echo "Try with $(cat file)"
         fi
     fi
     movesCnt=$(($movesCnt + 1))

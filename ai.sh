@@ -132,9 +132,9 @@ draw() {
 max() {
     if ! [ -z $2 ] && [ $1 -gt $2 ];then
         echo $1
-        echo "$2 $3 $4" > file
+        echo "$3 $4" > file
     else
-        echo "$2 $3 $4" > file
+        echo "$3 $4" > file
         echo $2
     fi
 }
@@ -162,9 +162,9 @@ else
 fi
 
 if [ $(check_win $3 $4 "O" $1) -eq 1 ];then
-    echo -1
-elif [ $(check_win $3 $4 "X" $1) -eq 1 ];then
     echo 1
+elif [ $(check_win $3 $4 "X" $1) -eq 1 ];then
+    echo -1
 elif [ $(is_full $1) -eq 1 ];then
     echo 0
 else
