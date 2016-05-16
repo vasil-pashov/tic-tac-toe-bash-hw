@@ -68,7 +68,7 @@ check_diags() {
 }
 
 check_win() {
-    echo "$1 $2" >> file
+    #echo "$1 $2" >> file
     #1 row; 2 col; 3 mark; 4 board
     winRow=$(check_row $1 $3 "$4")
     winCol=$(check_col $2 $3 "$4")
@@ -132,8 +132,9 @@ draw() {
 max() {
     if ! [ -z $2 ] && [ $1 -gt $2 ];then
         echo $1
+        echo "$2 $3 $4" > file
     else
-        echo "$3 $4" > file
+        echo "$2 $3 $4" > file
         echo $2
     fi
 }
@@ -141,8 +142,9 @@ max() {
 min() {
     if ! [ -z $2 ] && [ $1 -lt $2 ];then
         echo $1
+        echo "$2 $3 $4" > file
     else
-        echo "$3 $4" > file
+        echo "$2 $3 $4" > file
         echo $2
     fi
 }
@@ -160,9 +162,9 @@ else
 fi
 
 if [ $(check_win $3 $4 "O" $1) -eq 1 ];then
-    echo 1
-elif [ $(check_win $3 $4 "X" $4) -eq 1 ];then
     echo -1
+elif [ $(check_win $3 $4 "X" $1) -eq 1 ];then
+    echo 1
 elif [ $(is_full $1) -eq 1 ];then
     echo 0
 else
@@ -175,18 +177,14 @@ else
                 else
                     newM="X"
                 fi
-                #bash ai.sh $new $newM $i $j
                 res=$(bash ai.sh $new $newM $i $j)
-                #echo $res
                 if ! [ -z "$res" ];then
-                if [ $2 = "X" ];then
-                    result=$(min $result $res $3 $4)
-                    #echo "$result X" >> f
-                else
-                    result=$(max $result $res $3 $4)
-                    #echo "$result O" >> f
+                    if [ $2 = "X" ];then
+                        result=$(min $result $res $3 $4)
+                    else
+                        result=$(max $result $res $3 $4)
+                    fi
                 fi
-            fi
             fi
         done
     done

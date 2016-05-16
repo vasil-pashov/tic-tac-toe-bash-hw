@@ -144,8 +144,8 @@ draw() {
 }
 
 #===========Create Dir================
-if ! [ -d .tic-tac-toe ];then
-    mkdir .tic-tac-toe
+if ! [ -d ~/.tic-tac-toe ];then
+    mkdir ~/.tic-tac-toe
 fi
 #====================================
 #=======Enter player Names===========
@@ -159,7 +159,7 @@ echo "$player1 vs. $player2"
 #====================================
 #=========Log file===================
 name="$player1-$player2-$(date +%s)"
-filepath=".tic-tac-toe/$name.log"
+filepath=~/.tic-tac-toe/$name.log
 touch $filepath
 #====================================
 #========Board file==================
@@ -177,8 +177,8 @@ mark="X"
 playerFlag=0
 while [ $movesCnt -lt 9 ]
 do
-    #=========================PLAYER 1==================================================
-    #=================Player1 validation===============================
+    #=========================PLAYER==================================================
+    #=================Player validation===============================
     isPositionValid=0
     while [ $isPositionValid -ne 1 ];do
         echo "$player make your move - (row,col)"
@@ -201,7 +201,7 @@ do
    
     board=$(put_mark $row $col $mark "$board") 
 
-    echo $board
+    #echo $board
 
     draw "$board"
 
@@ -218,12 +218,16 @@ do
     else
         player=$player2
         mark="O"
-#        ai "$board" $mark
+        echo "Do you want help? Dont rely on it :("
+        read use_ai
+        if [ "$use_ai" = "y" ];then
+            bash ai.sh "$board" $mark $i $j
+        fi
     fi
     movesCnt=$(($movesCnt + 1))
 done
 
 if [ $movesCnt -eq 9 ];then
-    echo "Even" >> $filepath
+    echo "Game is even" | tee -a $filepath
 fi
 
