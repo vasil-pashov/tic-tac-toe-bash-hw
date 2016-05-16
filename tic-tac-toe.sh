@@ -1,51 +1,42 @@
 check_row() {
     #1 row; 2 mark; 3 board
-    win=1
-    line=$(head -n$(($row*2 + 2)) $3 | tail -n1)
-    i=2
-    while [ $i -lt 5 ]
-    do
-        field=$(echo "$line" | cut -d"|" -f$i)
-        if [ "$field" != $2 ];then
+    local win=1
+    for i in $(seq 1 3);do
+        f=$(get $1 $i "$3")
+        if [ "$f" != $2 ];then
             win=0
             break
         fi
-        i=$(($i + 1))
     done
     echo $win
 }
 
 check_col() {
     #1 col; 2 mark; 3 board
-    win=1
-    c=$(cut -s -d"|" -f$(($1 + 2)) $3)
-    i=1
-    while [ $i -lt 4 ];do
-        field=$(echo "$c" | head -n$i | tail -n1)
-        if [ "$field" != $2 ];then
+    local win=1
+    for i in $(seq 1 3);do
+        f=$(get $i $1 "$3")
+        if [ "$f" != $2 ];then
             win=0
             break
         fi
-        i=$(($i + 1))
     done
-    echo "$win"
+    echo $win
 }
 
 check_main_diag() {
     #1 row; 2 col; 3 mark; 4 board
-    i=0
-    win=1
+    local i
+    local win=1
     if [ $1 -ne $2 ];then
         win=0
     else
-        while [ $i -lt 3 ];do
-            line=$(head -n$(($i*2 + 2)) $4 | tail -n1)
-            field=$(echo $line | cut -d"|" -f$(($i+2)))
+        for i in $(seq 1 3);do
+            field=$(get $i $i "$4")
             if [ "$field" != $3 ];then
                 win=0
                 break
             fi
-            i=$(($i + 1))
         done
     fi
     echo "$win"
@@ -53,52 +44,51 @@ check_main_diag() {
 
 check_sec_diag() {
     #1 row; 2 col; 3 mark; 4 board
-    i=0
-    win=1
-    if [ $(( $col + $row )) -ne 2 ];then
+    local win=1
+    if [ $(( $col + $row )) -ne 4 ];then
         win=0
     else
-        while [ $i -lt 3 ];do
-            line=$(head -n$(($i * 2 + 2)) $4 | tail -n1)
-            field=$(echo $line | cut -d"|" -f$((4 - $i)))
+    for i in $(seq 1 3);do
+        field=$(get $(( 4 - $i  )) $i "$4")
             if [ "$field" != $3 ];then
                 win=0
                 break
             fi
-            i=$(($i + 1))
         done
+
     fi
     echo "$win"
 }
 
 check_diags() {
     #1 row; 2 col; 3 mark; 4 board
-    main=$(check_main_diag $1 $2 $3 $4)
-    sec=$(check_sec_diag $1 $2 $3 $4)
+    main=$(check_main_diag $1 $2 $3 "$4")
+    sec=$(check_sec_diag $1 $2 $3 "$4")
     echo $(($main || $sec))
 }
 
 check_win() {
     #1 row; 2 col; 3 mark; 4 board
-    winRow=$(check_row $1 $3 $4)
-    winCol=$(check_col $1 $3 $4)
-    winDiag=$(check_diags $1 $2 $3 $4)
+    winRow=$(check_row $1 $3 "$4")
+    winCol=$(check_col $2 $3 "$4")
+    winDiag=$(check_diags $1 $2 $3 "$4")
     echo $(($winRow || $winCol || $winDiag))
 }
 
 put_mark() {
     #1 row; 2 col; 3 mark; 4 board
-    h=$(head -n$(( $1 * 2 + 1)) $4)
-    t=$(tail -n+$(( $1 * 2 + 3 )) $4)
-    line=$(head -n$(($1*2 + 2)) $4 | tail -n1)
-    left=$(echo $line | cut -d"|" -f1-$(( $2 + 1)))
-    right=$(echo $line | cut -d"|" -f$(( $2 + 3))-)
-    newLine="$left|$3|$right"
+    pos=$(( ($1 - 1) * 3 + $2 + 1))
+    prev=$(echo "$board" |cut -d"|" -f1-$(( $pos - 1)))
+    next=$(echo "$board" |cut -d"|" -f$(( $pos + 1))-)
+    #echo "$board"
+    echo "$prev|$mark|$next"
+}
 
-    echo >> $4
-    echo "$h" | tee $4
-    echo "$newLine" | tee -a $4
-    echo "$t" | tee -a $4
+get() {
+    #1 row; 2 col;3 board
+    echo "$3" >> f
+    p=$(( ($1 - 1) * 3 + $2 + 1))
+    echo "$3"| cut -d"|" -f$p
 }
 
 is_full() {
@@ -113,11 +103,11 @@ is_full() {
 
 is_free() {
     #1 row; 2 col; 3 board
-    field=$(head -n$(( $1 * 2 + 2 )) $3 | tail -n1 | cut -d"|" -f$(($2 + 2)))
-    if [ "$field" != " " ];then
-        echo 0
-    else
+    field=$(get $1 $2 "$board")
+    if [ "$field" = " " ];then
         echo 1
+    else
+        echo 0
     fi
 }
 
@@ -167,6 +157,18 @@ ai() {
     done
 }
 
+draw() {
+    echo "-------------"
+    for i in $(seq 1 3);do
+        for j in $(seq 1 3);do
+            f=$(get $i $j "$1")
+            echo -n "| $f "
+        done
+        echo "|"
+        echo "-------------"
+    done
+}
+
 #===========Create Dir================
 if ! [ -d .tic-tac-toe ];then
     mkdir .tic-tac-toe
@@ -187,17 +189,11 @@ filepath=".tic-tac-toe/$name.log"
 touch $filepath
 #====================================
 #========Board file==================
-board="$name-board.tmp"
 
-i=0
-echo "-------" >> $board
-while [ $i -lt 3 ]
-do
-    echo "| | | |" >> $board
-    echo "-------" >> $board
-    i=$(expr $i + 1)
+for i in $(seq 0 9);do
+    board=$(echo -n "$board |")
 done
-#    echo -e "Something\n"
+echo $board
 
 #=====================================================================
 #====================Moves=============================================
@@ -213,11 +209,11 @@ do
     while [ $isPositionValid -ne 1 ];do
         echo "$player make your move - (row,col)"
         read playerMove
-        isPositionValid=$(echo $playerMove | grep "([0-2],[0-2])" | wc -l) 
+        isPositionValid=$(echo $playerMove | grep "([1-3],[1-3])" | wc -l) 
         if [ $isPositionValid -eq 1 ];then
             row=$(expr substr $playerMove 2 1)
             col=$(expr substr $playerMove 4 1)
-            if [ $(is_free $row $col $board) -eq 0 ];then
+            if [ $(is_free $row $col "$board") -eq 0 ];then
                 echo "This field is already taken!"
                 isPositionValid=0
             fi
@@ -229,11 +225,14 @@ do
     #========================Create new board==========================
 
    
-    put_mark $row $col $mark $board 
+    board=$(put_mark $row $col $mark $board) 
 
+    echo $board
+
+    draw "$board"
 
     echo "$player - $playerMove">>$filepath
-    if [ $(check_win $row $col $mark $board) -eq 1 ];then
+    if [ $(check_win $row $col $mark "$board") -eq 1 ];then
         echo "$player wins" | tee -a $filepath
         break
     fi
@@ -245,7 +244,7 @@ do
     else
         player=$player2
         mark="O"
-        ai $board $mark
+        #ai $board $mark
     fi
     movesCnt=$(($movesCnt + 1))
 done
@@ -254,4 +253,3 @@ if [ $movesCnt -eq 9 ];then
     echo "Even" >> $filepath
 fi
 
-rm $board
